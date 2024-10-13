@@ -23,7 +23,7 @@ const connectMongo = async () => {
     await client.connect();
     db = client.db("IT-Project-Tracker-DB");
 
-    app.listen(port, () => {
+    app.listen(port,'0.0.0.0', () => {
       console.log(`Server is running on port ${port}`);
     });
   } catch (err) {

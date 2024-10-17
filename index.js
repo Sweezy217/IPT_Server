@@ -5,11 +5,14 @@ const { MongoClient, ObjectId } = require("mongodb");
 const port = process.env.PORT || 3000;
 const cors = require("cors");
 const bcrypt = require("bcrypt");
+const multer = require("multer");
 const nodemailer = require("nodemailer");
 const saltRounds = 10;
 const mongoUrl = process.env.URL;
 
 // Middleware
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 app.use(express.json());
 app.use(cors());
 let client, db;
@@ -23,7 +26,7 @@ const connectMongo = async () => {
     await client.connect();
     db = client.db("IT-Project-Tracker-DB");
 
-    app.listen(port,'0.0.0.0', () => {
+    app.listen(port, () => {
       console.log(`Server is running on port ${port}`);
     });
   } catch (err) {
@@ -168,8 +171,6 @@ app.post("/teamMembers", async (req, res) => {
     return res.status(500).send({ message: `Internal Server Error: ${error}` });
   }
 });
-
-// app.use(auth);
 
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
@@ -404,7 +405,7 @@ app.get("/users/:userId", async (req, res) => {
 });
 
 app.put("/user", async (req, res) => {
-  const userId = req.params.email;
+  const userId = req.query.userid;
   const newUserData = req.body;
 
   try {
@@ -464,6 +465,53 @@ app.post("/getTasks", async (req, res) => {
   } catch (error) {
     console.log("Error fetching tasks", error);
     res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+app.delete("/deletetask", async (req, res) => {
+  console.log(req.body);
+  const { id, workspaceName } = req.body;
+  const collection = db.collection("Tasks");
+  const taskId = new ObjectId(id);
+
+  try {
+    // Delete the task based on both id and workspaceName
+    const result = await collection.deleteOne({
+      _id: taskId,
+      workspaceName: workspaceName,
+    });
+
+    if (result.deletedCount === 1) {
+      return res.status(200).send({ message: "Task deleted successfully" });
+    } else {
+      return res.status(404).send({ message: "Task not found" });
+    }
+  } catch (error) {
+    console.error("An error occurred while deleting the task", error);
+    return res.status(500).send({ message: "Internal Server Error" });
+  }
+});
+
+app.put("/movetask", async (req, res) => {
+  const { id, selection } = req.body;
+  const collection = db.collection("Tasks");
+  const taskId = new ObjectId(id);
+
+  try {
+    // Delete the task based on both id and workspaceName
+    const result = await collection.updateOne(
+      { _id: taskId },
+      { $set: { status: selection } }
+    );
+
+    if (result.matchedCount === 1) {
+      return res.status(200).send({ message: "Task moved successfully" });
+    } else {
+      return res.status(404).send({ message: "Task not found" });
+    }
+  } catch (error) {
+    console.error("An error occurred while moving the task", error);
+    return res.status(500).send({ message: "Internal Server Error" });
   }
 });
 
@@ -536,9 +584,11 @@ app.post("/getProject", async (req, res) => {
     const { workspaceName } = req.body;
     const collection = db.collection("Projects");
 
-    const result = await collection.find({
-      workspaceName,
-    }).toArray();
+    const result = await collection
+      .find({
+        workspaceName,
+      })
+      .toArray();
 
     res.status(201).json({
       message: result,
@@ -549,4 +599,32 @@ app.post("/getProject", async (req, res) => {
   }
 });
 
+app.post(
+  "/upload-profile-image",
+  upload.single("profileImage"),
+  async (req, res) => {
+    try {
+      const userId = req.body.userId;
+
+      // Create or update user profile with image
+      const profileImage = {
+        data: req.file.buffer,
+        contentType: req.file.mimetype,
+      };
+
+      const result = await db
+        .collection("users")
+        .updateOne(
+          { _id: new ObjectId(userId) },
+          { $set: { profileImage } },
+          { upsert: true }
+        );
+
+      res.send("Profile image uploaded successfully!");
+    } catch (err) {
+      console.error("Error uploading image:", err);
+      res.status(500).send("Error uploading image");
+    }
+  }
+);
 connectMongo();

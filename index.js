@@ -5,14 +5,14 @@ const { MongoClient, ObjectId } = require("mongodb");
 const port = process.env.PORT || 3000;
 const cors = require("cors");
 const bcrypt = require("bcrypt");
-const multer = require("multer");
+// const multer = require("multer");
 const nodemailer = require("nodemailer");
 const saltRounds = 10;
 const mongoUrl = process.env.URL;
 
 // Middleware
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
+// const storage = multer.memoryStorage();
+// const upload = multer({ storage });
 app.use(express.json());
 app.use(cors());
 let client, db;
@@ -185,7 +185,7 @@ app.post("/login", async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return res.status(400).json({ message: "Invalid email or password" });
+      return res.status(400).json({ message: "Invalid password" });
     }
     delete user["password"];
 
@@ -377,7 +377,7 @@ app.post("/invite", async (req, res) => {
   }
 });
 
-app.get("/users", async (req, res) => {
+app.get("api/users", async (req, res) => {
   try {
     const collection = db.collection("Users");
     const data = await collection.find({}).toArray();
@@ -515,6 +515,29 @@ app.put("/movetask", async (req, res) => {
   }
 });
 
+app.put("/editmember", async (req, res) => {
+  const { id } = req.body;
+  const { firstName, lastName, role } = req.body;
+  const collection = db.collection("UserWorkSpaces");
+  const memberId = new ObjectId(id);
+
+  try {
+    const result = await collection.updateOne(
+      { _id: memberId },
+      { $set: { firstName: firstName, lastName: lastName, role: role } }
+    );
+
+    if (result.matchedCount === 1) {
+      return res.status(200).send({ message: "Member updated successfully" });
+    } else {
+      return res.status(404).send({ message: "Member not found" });
+    }
+  } catch (error) {
+    console.error("An error occurred while updating the Member", error);
+    return res.status(500).send({ message: "Internal Server Error" });
+  }
+});
+
 app.put("/update-user", async (req, res) => {
   const email = req.query.email;
   const newUserData = req.body;
@@ -599,32 +622,32 @@ app.post("/getProject", async (req, res) => {
   }
 });
 
-app.post(
-  "/upload-profile-image",
-  upload.single("profileImage"),
-  async (req, res) => {
-    try {
-      const userId = req.body.userId;
+// app.post(
+//   "/upload-profile-image",
+//   upload.single("profileImage"),
+//   async (req, res) => {
+//     try {
+//       const userId = req.body.userId;
 
-      // Create or update user profile with image
-      const profileImage = {
-        data: req.file.buffer,
-        contentType: req.file.mimetype,
-      };
+//       // Create or update user profile with image
+//       const profileImage = {
+//         data: req.file.buffer,
+//         contentType: req.file.mimetype,
+//       };
 
-      const result = await db
-        .collection("users")
-        .updateOne(
-          { _id: new ObjectId(userId) },
-          { $set: { profileImage } },
-          { upsert: true }
-        );
+//       const result = await db
+//         .collection("users")
+//         .updateOne(
+//           { _id: new ObjectId(userId) },
+//           { $set: { profileImage } },
+//           { upsert: true }
+//         );
 
-      res.send("Profile image uploaded successfully!");
-    } catch (err) {
-      console.error("Error uploading image:", err);
-      res.status(500).send("Error uploading image");
-    }
-  }
-);
+//       res.send("Profile image uploaded successfully!");
+//     } catch (err) {
+//       console.error("Error uploading image:", err);
+//       res.status(500).send("Error uploading image");
+//     }
+//   }
+// );
 connectMongo();

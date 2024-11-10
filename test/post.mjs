@@ -81,8 +81,54 @@ describe("POST /createWorkspace", () => {
         .that.includes("Internal Server Error");
     }
   });
+});
 
-  after(async () => {
-    // Clean up the created test data, such as by deleting users or workspaces if needed
+describe("POST /addTask", () => {
+  const validTaskData = {
+    title: "Complete Project Report",
+    description: "Prepare the final report for the project",
+    priority: "High",
+    startDate: "2024-12-01",
+    dueDate: "2024-12-15",
+    status: "to do",
+    assignee: ["siphomkhize217@gmail.com"],
+    email: "siphomkhize217@gmail.com",
+    workspaceName: "Sweezyville",
+  };
+
+  it("should create a new task successfully", async () => {
+    try {
+      const response = await axios.post(`${BASE_URL}/addTask`, validTaskData);
+      
+      expect(response.status).to.equal(201);
+      expect(response.data).to.have.property("message", "task Successfully Created");
+      expect(response.data).to.have.property("userId");
+    } catch (error) {
+      throw new Error(`Expected status 201 but got ${error.response.status}`);
+    }
+  });
+
+  it("should return 400 if required fields are missing", async () => {
+    const incompleteTaskData = {
+      title: "Complete Project Report",
+    };
+
+    try {
+      await axios.post(`${BASE_URL}/addTask`, incompleteTaskData);
+      throw new Error("Expected error but request succeeded");
+    } catch (error) {
+      expect(error.response.status).to.equal(400);
+      expect(error.response.data).to.have.property("message", "All fields are required");
+    }
+  });
+
+  it("should return 500 in case of a server error", async () => {
+    try {
+      await axios.post(`${BASE_URL}/addTask`, validTaskData);
+      throw new Error("Expected error but request succeeded");
+    } catch (error) {
+      expect(error.response.status).to.equal(500);
+      expect(error.response.data).to.have.property("message", `Internal Server Error ${error}`);
+    }
   });
 });

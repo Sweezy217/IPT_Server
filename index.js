@@ -459,6 +459,13 @@ app.post("/getTasks", async (req, res) => {
       })
       .toArray();
 
+    console.log(result);
+
+    if (result.length < 1)
+      return res.status(404).json({
+        message: "No tasks found",
+      });
+
     res.status(201).json({
       message: result,
     });

@@ -377,7 +377,7 @@ app.post("/invite", async (req, res) => {
   }
 });
 
-app.get("api/users", async (req, res) => {
+app.get("/users", async (req, res) => {
   try {
     const collection = db.collection("Users");
     const data = await collection.find({}).toArray();

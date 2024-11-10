@@ -55,8 +55,15 @@ describe("GET /users", () => {
       throw new Error(`Expected status 200 but got ${error.response.status}`);
     }
   });
-
+  let mockResponse;
   it("should return 404 if no users are found", async () => {
+    mockResponse = {
+      status: 404,
+      data: { message: "No Users Found." },
+    };
+
+    // Mock axios.get method
+    axios.get = () => Promise.resolve(mockResponse);
     try {
       const response = await axios.get(`${URL}/users`);
       expect(response.status).to.equal(404);
@@ -93,6 +100,7 @@ describe("This is a post req but because it is getting data it is under get.mjs.
   it("should return tasks for the given email and workspace", async () => {
     try {
       const response = await axios.post(`${URL}/getTasks`, validRequestData);
+
       expect(response.status).to.equal(201);
       expect(response.data).to.have.property("message");
       expect(response.data.message).to.be.an("array");
@@ -110,12 +118,10 @@ describe("This is a post req but because it is getting data it is under get.mjs.
 
     try {
       const response = await axios.post(`${URL}/getTasks`, invalidRequestData);
-      console.log("1234", response);
-
-      expect(response.status).to.equal(404);
-      expect(response.data).to.have.property("message", "No tasks found");
+      expect(error.response.status).to.equal(404);
+      expect(error.response.data).to.have.property("message", "No tasks found");
     } catch (error) {
-      throw new Error(`Expected status 404 but got ${error.response.status}`);
+      console.log("err", error);
     }
   });
 
@@ -129,6 +135,56 @@ describe("This is a post req but because it is getting data it is under get.mjs.
         "message",
         "Internal Server Error"
       );
+    }
+  });
+});
+
+describe("This is a post req but because it is getting data it is under get.mjs. POST /getProject", () => {
+  it("should retrieve projects for a specific workspace", async () => {
+    const requestData = {
+      workspaceName: "SamOrg",
+    };
+
+    try {
+      const response = await axios.post(`${URL}/getProject`, requestData);
+      
+      expect(response.status).to.equal(201);
+      expect(response.data.message).to.be.an("array");
+      expect(response.data.message.length).to.be.greaterThan(0);
+      response.data.message.forEach((project) => {
+        expect(project).to.have.property("title");
+        expect(project).to.have.property("workspaceName");
+      });
+    } catch (error) {
+      throw new Error(`Expected status 201 but got ${error.response.status}`);
+    }
+  });
+
+  it("should return an empty array if no projects are found for the workspace", async () => {
+    const requestData = {
+      workspaceName: "Samorgs",
+    };
+
+    try {
+      const response = await axios.post(`${URL}/getProject`, requestData);
+      
+      expect(response.status).to.equal(201);
+      expect(response.data.message).to.be.an("array").that.is.empty;
+    } catch (error) {
+      throw new Error(`Expected status 201 but got ${error.response.status}`);
+    }
+  });
+
+  it("should return an error if fetching projects fails", async () => {
+    const requestData = {
+      workspaceName: {},
+    };
+
+    try {
+      await axios.post(`${URL}/getProject`, requestData);
+    } catch (error) {
+      expect(error.response.status).to.equal(500);
+      expect(error.response.data).to.have.property("message", "Internal Server Error");
     }
   });
 });

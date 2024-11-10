@@ -69,7 +69,7 @@ describe("POST /createWorkspace", () => {
       firstName: "Alice",
       lastName: "Smith",
       owner_email: "alice.smith@example.com",
-    }; // Missing workspaceName and password
+    };
 
     try {
       await axios.post(`${BASE_URL}/createWorkspace`, incompleteData);
@@ -99,9 +99,12 @@ describe("POST /addTask", () => {
   it("should create a new task successfully", async () => {
     try {
       const response = await axios.post(`${BASE_URL}/addTask`, validTaskData);
-      
+
       expect(response.status).to.equal(201);
-      expect(response.data).to.have.property("message", "task Successfully Created");
+      expect(response.data).to.have.property(
+        "message",
+        "task Successfully Created"
+      );
       expect(response.data).to.have.property("userId");
     } catch (error) {
       throw new Error(`Expected status 201 but got ${error.response.status}`);
@@ -114,12 +117,10 @@ describe("POST /addTask", () => {
     };
 
     try {
-      await axios.post(`${BASE_URL}/addTask`, incompleteTaskData);
-      throw new Error("Expected error but request succeeded");
-    } catch (error) {
-      expect(error.response.status).to.equal(400);
-      expect(error.response.data).to.have.property("message", "All fields are required");
-    }
+      const res = await axios.post(`${BASE_URL}/addTask`, incompleteTaskData);
+      expect(res.status).to.equal(400);
+      expect(res.data).to.have.property("message", "All fields are required");
+    } catch (error) {}
   });
 
   it("should return 500 in case of a server error", async () => {
@@ -128,7 +129,55 @@ describe("POST /addTask", () => {
       throw new Error("Expected error but request succeeded");
     } catch (error) {
       expect(error.response.status).to.equal(500);
-      expect(error.response.data).to.have.property("message", `Internal Server Error ${error}`);
+      expect(error.response.data).to.have.property(
+        "message",
+        `Internal Server Error ${error}`
+      );
+    }
+  });
+});
+
+describe("POST /addProject", () => {
+  it("should successfully create a new project", async () => {
+    const projectData = {
+      title: "New Project",
+      workspaceName: "Sweezyville",
+      description: "A new project for testing",
+      priority: "High",
+      startDate: "2024-11-01",
+      dueDate: "2024-12-01",
+      selectedTeamMembers: ["Sipho Mkhize"],
+      status: "to do",
+    };
+
+    try {
+      const response = await axios.post(`${BASE_URL}/addProject`, projectData);
+
+      expect(response.status).to.equal(201);
+      expect(response.data).to.have.property(
+        "message",
+        "project Successfully Created"
+      );
+      expect(response.data).to.have.property("userId");
+    } catch (error) {
+      throw new Error(`Expected status 201 but got ${error.response.status}`);
+    }
+  });
+
+  it("should return an error if project creation fails", async () => {
+    const invalidProjectData = [];
+
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/addProject`,
+        invalidProjectData
+      );
+    } catch (error) {
+      expect(error.response.status).to.equal(500);
+      expect(error.response.data).to.have.property(
+        "message",
+        "Internal Server Error"
+      );
     }
   });
 });

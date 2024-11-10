@@ -429,6 +429,11 @@ app.put("/user", async (req, res) => {
 app.post("/addTask", async (req, res) => {
   try {
     const task = req.body;
+    const length = Object.keys(task).length;
+    if (length != 9)
+      return res.status(400).json({
+        message: "All fields are required",
+      });
     const collection = db.collection("Tasks");
 
     // Store the user with the hashed password
@@ -459,12 +464,12 @@ app.post("/getTasks", async (req, res) => {
       })
       .toArray();
 
-    console.log(result);
-
-    if (result.length < 1)
-      return res.status(404).json({
+    if (result.length < 1) {
+      res.status(404).json({
         message: "No tasks found",
       });
+      return;
+    }
 
     res.status(201).json({
       message: result,

@@ -1,7 +1,7 @@
 import axios from "axios";
 import { expect } from "chai";
 
-const URL = "http://localhost:8000";
+const URL = "http://3.82.10.171:8000";
 
 describe("GET /userWorkSpaces", () => {
   it("should return 400 if email query parameter is missing", async () => {

@@ -1,7 +1,7 @@
 import axios from "axios";
 import { expect } from "chai";
 
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = "http://3.82.10.171:8000";
 
 describe("POST /createWorkspace", () => {
   // Define sample data for testing

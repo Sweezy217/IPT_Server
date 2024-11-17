@@ -179,7 +179,7 @@ app.post("/login", async (req, res) => {
     const user = await db.collection("Users").findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid email" });
+      return res.status(400).json({ message: "User email doesn't exist" });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -634,32 +634,25 @@ app.post("/getProject", async (req, res) => {
   }
 });
 
-// app.post(
-//   "/upload-profile-image",
-//   upload.single("profileImage"),
-//   async (req, res) => {
-//     try {
-//       const userId = req.body.userId;
+app.post("/upload-profile-image", async (req, res) => {
+  try {
+    if (!req.imgURL) return res.status(400).json({ error: "No file uploaded" });
 
-//       // Create or update user profile with image
-//       const profileImage = {
-//         data: req.file.buffer,
-//         contentType: req.file.mimetype,
-//       };
+    const newImage = {
+      url: req.imgURL,
+      email: req.email,
+      workspaceName: req.workspaceName,
+    };
 
-//       const result = await db
-//         .collection("users")
-//         .updateOne(
-//           { _id: new ObjectId(userId) },
-//           { $set: { profileImage } },
-//           { upsert: true }
-//         );
+    const result = await db.collection("UserProfileImg").insertOne(newImage);
 
-//       res.send("Profile image uploaded successfully!");
-//     } catch (err) {
-//       console.error("Error uploading image:", err);
-//       res.status(500).send("Error uploading image");
-//     }
-//   }
-// );
+    res
+      .status(201)
+      .json({ message: "Image uploaded", imageId: result.insertedId });
+  } catch (error) {
+    console.error("Error uploading image:", error);
+    res.status(500).json({ error: "Error uploading image" });
+  }
+});
+
 connectMongo();

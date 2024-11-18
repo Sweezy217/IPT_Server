@@ -70,7 +70,20 @@ app.post("/signup", async (req, res) => {
     const UserCollection = db.collection("Users");
     const InvitesCollection = db.collection("Invites");
     const UserWorkSpaces = db.collection("UserWorkSpaces");
+    const WorkSpaces = db.collection("WorkSpaces");
 
+    const findWorkspace = await WorkSpaces.findOne({
+      workspaceName,
+    });
+
+    if (!findWorkspace) {
+      return res
+        .status("404")
+        .json({
+          message:
+            "WorkSpace does not exist. Please ensure workspace name is correct.",
+        });
+    }
     // Check if user exists in Users collection
     const existingUserInUsers = await UserCollection.findOne({ email });
 
@@ -119,7 +132,7 @@ app.post("/signup", async (req, res) => {
     if (!invitedUser) {
       return res.status(404).json({
         message:
-          "User does not exist. Please contact the workspace owner to invite you.",
+          "User Was not Invited to Workspace. Please contact the workspace owner to invite you.",
       });
     }
 
